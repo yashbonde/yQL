@@ -2,6 +2,32 @@
 
 Compile [Protobuf](https://developers.google.com/protocol-buffers/docs/proto3) to [fastAPI](https://fastapi.tiangolo.com/).
 
+Import `{name}_client` in your application:
+
+```python
+# Client application code
+from helloworld_client import GreeterStub
+from helloworld_pb2 import HelloRequest, HelloReply
+greeter = GreeterStub("http://127.0.0.1:8000") # define the endpoint
+
+reply: HelloReply = greeter.SayHello(HelloRequest()) # call it by passing protobufs
+print(reply.message)
+```
+
+And implement the server functions in `{name}_server.py`:
+
+```python
+... # imports
+
+def SayHello(_helloworld_HelloRequest: HelloRequest) -> HelloReply:
+  # add your code here
+  raise NotImplementedError
+
+... # other things
+```
+
+## Installation
+
 ```
 git clone https://github.com/yashbonde/yQL
 cd yQL

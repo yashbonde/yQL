@@ -6,7 +6,7 @@ from functools import partial
 
 
 from helloworld_pb2 import HelloRequest, HelloReply
-from rest_pb2 import Echo
+from yql.rest_pb2 import Echo
 from yql.common import call_rpc, dict_to_message, message_to_json
 
 

@@ -7,6 +7,7 @@ from yql.common import get_timestamp
 
 {%for (_service, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
 def {{_service}}({{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
+  # add your code here
   raise NotImplementedError
 {%endfor%}
 
