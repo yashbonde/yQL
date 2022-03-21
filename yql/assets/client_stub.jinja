@@ -1,0 +1,32 @@
+# Auto generated file. DO NOT EDIT.
+
+import requests
+from json import loads
+from functools import partial
+
+{%for _import in imports_strings%}
+{{_import}}{%endfor%}
+from rest_pb2 import Echo
+from yql.common import call_rpc, dict_to_message, message_to_json
+
+
+# ------ Stub ------ #
+
+class {{service_name}}Stub:
+  def __init__(self, url: str, session: requests.Session = None):
+    self.url = url
+    self.session = session or requests.Session()
+    self.status = partial(call_rpc, sess = self.session, url = f"{url}/")
+    self.protos = partial(call_rpc, sess = self.session, url = f"{url}/protos")
+{%for (_rpc, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
+  def {{_rpc}}(self, {{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
+    """{{_rpc}} file from one location to another location"""
+    echo_resp: Echo = call_rpc(
+      self.session,
+      f"{self.url}/predict",
+      Echo(message = "{{_input_proto}}", proto_data = message_to_json({{_in_var}}), rpc_name = "{{_rpc}}")
+    )
+    {{_out_var}} = dict_to_message(loads(echo_resp.proto_data), {{_output_proto}}())
+    return {{_out_var}}{%endfor%}
+
+# ------ End Stub ------ #
