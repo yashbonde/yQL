@@ -1,8 +1,8 @@
 # yQL
 
-Compile [Protobuf](https://developers.google.com/protocol-buffers/docs/proto3) to [fastAPI](https://fastapi.tiangolo.com/), embeds `yql` in generated folder so you don't have to install it.
+Compile [Protobuf](https://developers.google.com/protocol-buffers/docs/proto3) to [fastAPI](https://fastapi.tiangolo.com/).
 
-Used in production at [NimbleBox](http://nimblebox.ai/).
+Light weight (5.68Kb) embed-able library. Used in production at [NimbleBox](http://nimblebox.ai/).
 
 ## Usage
 
@@ -32,8 +32,11 @@ This will create the following files:
 Import `{name}_client` in your application:
 
 ```python
-greeter = GreeterStub("http://127.0.0.1:8000") # define the endpoint
-reply: HelloReply = greeter.SayHello(HelloRequest()) # call it by passing protobufs
+from helloworld_client import GreeterStub, HelloRequest
+
+greeter = GreeterStub("http://127.0.0.1:8000")          # define the endpoint
+reply = greeter.SayHello(HelloRequest(name = "Pankaj")) # call it by passing protobufs
+
 print(reply.message)
 ```
 
@@ -46,6 +49,8 @@ class Greeter_Servicer(object):
 ```
 
 ## Installation
+
+Since it is used to generate embeddable folders there is no point to make it indexed on pipy, instead use this manually.
 
 ```
 git clone https://github.com/yashbonde/yQL
