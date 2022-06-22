@@ -2,7 +2,16 @@ from json import loads
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-import {{server_stub}} as server_fns
+from {{server_stub}} import {{service_name}}_Servicer{%for _import in imports_strings%}
+{{_import}}{%endfor%}
+
+proto_services = { {%for service in all_services%}
+  "{{service}}": {{service_name}}_Servicer.{{service}},{%endfor%}
+}
+proto_messages = { {%for proto in all_protos%}
+  "{{proto}}": {{proto}},{%endfor%}
+}
+
 
 from yql.rest_pb2 import Echo
 from yql.common import default_echo, message_to_dict, run_rpc, dict_to_message, message_to_json
@@ -38,7 +47,7 @@ async def protos(request: Request, response: Response):
   echo_protos: Echo = default_echo()
   echo_protos.MergeFrom(Echo(
     message="available protos",
-    proto_data=", ".join(server_fns.protos)
+    proto_data=", ".join(tuple(proto_messages.keys()))
   ))
   response.status_code = 200
   return message_to_dict(echo_protos)
@@ -56,7 +65,7 @@ async def predict(request: Request, response: Response):
     return message_to_dict(echo)
 
   # get filled protobuf
-  proto_cls = server_fns.protos.get(echo_req.message, None)
+  proto_cls = proto_messages.get(echo_req.message, None)
   if proto_cls is None:
     echo.message = f"Invalid proto type: '{echo_req.message}'"
     response.status_code = 400
@@ -69,7 +78,7 @@ async def predict(request: Request, response: Response):
     return message_to_dict(echo)
 
   # get the rpc function to be called
-  rpc_fn = server_fns.services.get(echo_req.rpc_name, None)
+  rpc_fn = proto_services.get(echo_req.rpc_name, None)
   if rpc_fn is None:
     echo.message = f"Invalid rpc name: '{echo_req.rpc_name}'"
     response.status_code = 400

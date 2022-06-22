@@ -2,15 +2,15 @@ from json import loads
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from helloworld_server import Greeter_Servicer
-from helloworld_pb2 import HelloRequest, HelloReply
+from mongo_rpc_server import MongoJsonRPC_Servicer
+from mongo_rpc_pb2 import MongoRequest, MongoResponse
 
 proto_services = { 
-  "SayHello": Greeter_Servicer.SayHello,
+  "Call": MongoJsonRPC_Servicer.Call,
 }
 proto_messages = { 
-  "HelloRequest": HelloRequest,
-  "HelloReply": HelloReply,
+  "MongoResponse": MongoResponse,
+  "MongoRequest": MongoRequest,
 }
 
 

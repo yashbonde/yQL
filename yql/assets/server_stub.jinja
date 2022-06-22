@@ -1,20 +1,8 @@
 # Auto generated, complete the functions below
-
-import random
 {%for _import in imports_strings%}
 {{_import}}{%endfor%}
-from yql.common import get_timestamp
 
-{%for (_service, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
-def {{_service}}({{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
-  # add your code here
-  raise NotImplementedError
+class {{service_name}}_Servicer(object):{%for (_service, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
+  def {{_service}}({{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
+    raise NotImplementedError
 {%endfor%}
-
-# defined for convinience
-services = { {%for service in all_services%}
-  "{{service}}": {{service}},{%endfor%}
-}
-protos = { {%for proto in all_protos%}
-  "{{proto}}": {{proto}},{%endfor%}
-}

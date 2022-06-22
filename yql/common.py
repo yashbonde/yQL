@@ -39,7 +39,7 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   try:
     r.raise_for_status()
   except Exception as e:
-    logging.error(r.text)
+    logging.error(r.content)
     raise e
   out = dict_to_message(r.json(), Echo())
   return out
@@ -48,6 +48,8 @@ def run_rpc(service_fn, message):
   logging.info(f"service_fn: {service_fn.__qualname__}")
   try:
     response = service_fn(message)
+  except NotImplementedError:
+    return default_echo()
   except Exception as e:
     return str(e)
   return response

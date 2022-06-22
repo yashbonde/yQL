@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+service MongoJsonRPC {
+  rpc Call(MongoRequest) returns (MongoResponse) {}
+}
+
+message MongoRequest {
+  // fn = getattr(pymongo, method)
+  string method = 1;
+
+  // out = eval(fn, args)
+  string args = 2;
+}
+
+message MongoResponse {
+  oneof response {
+    // binary json string
+    bytes result_binary = 1;
+
+    // utf-8 encoded json string
+    string result_string = 2;
+
+    // or get the full line by line traceback or exception
+    string traceback = 3;
+  }
+}

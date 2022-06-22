@@ -87,9 +87,7 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         trg.write(jinja2.Template(src.read()).render(
           service_tuples=service_tuples,
           imports_strings=imports_strings,
-          all_services=list(all_services),
-          all_protos=list(all_protos),
-          zip=zip
+          service_name=service.name,
         ))
 
       with open(file_x("assets", "client_stub.jinja"), "r") as src, open(trg_client, "w") as trg:
@@ -102,7 +100,11 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
 
       with open(file_x("assets", "server.jinja"), "r") as src, open(run_server, "w") as trg:
         trg.write(jinja2.Template(src.read()).render(
-          server_stub = proto_name.split(".")[0] + "_server"
+          server_stub = proto_name.split(".")[0] + "_server",
+          service_name = service.name,
+          all_services=list(all_services),
+          all_protos=list(all_protos),
+          imports_strings=imports_strings,
         ))
 
 
