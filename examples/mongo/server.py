@@ -9,8 +9,8 @@ proto_services = {
   "Call": MongoJsonRPC_Servicer.Call,
 }
 proto_messages = { 
-  "MongoResponse": MongoResponse,
   "MongoRequest": MongoRequest,
+  "MongoResponse": MongoResponse,
 }
 
 

@@ -9,8 +9,8 @@ proto_services = {
   "SayHello": Greeter_Servicer.SayHello,
 }
 proto_messages = { 
-  "HelloRequest": HelloRequest,
   "HelloReply": HelloReply,
+  "HelloRequest": HelloRequest,
 }
 
 

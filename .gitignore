@@ -130,3 +130,5 @@ dmypy.json
 
 __ignore/
 js.proto
+
+examples/*/yql/

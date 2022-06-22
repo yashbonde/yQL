@@ -81,6 +81,8 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
       imports_strings = [f"from {k} import {', '.join(v)}" for k,v in proto_imports.items()]
+      all_services = sorted(all_services)
+      all_protos = sorted(all_protos)
 
       # load the jinja templates
       with open(file_x("assets", "server_stub.jinja"), "r") as src, open(trg_server, "w") as trg:
@@ -106,6 +108,11 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
           all_protos=list(all_protos),
           imports_strings=imports_strings,
         ))
+
+      # embed yql in target folder
+      files_to_move = [file_x("__init__.py"), file_x("common.py"), file_x("rest_pb2.py"), file_x("rest_pb2.pyi")]
+      os.system(f"mkdir {trg_folder}/yql")
+      os.system(f"cp {' '.join(files_to_move)} {trg_folder}/yql")
 
 
 def main():
