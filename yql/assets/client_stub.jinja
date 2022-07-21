@@ -19,7 +19,6 @@ class {{service_name}}_Stub:
     self.protos = partial(call_rpc, sess = self.session, url = f"{url}/protos")
 {%for (_rpc, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
   def {{_rpc}}(self, {{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
-    """{{_rpc}} file from one location to another location"""
     echo_resp: Echo = call_rpc(
       self.session,
       f"{self.url}/predict",
