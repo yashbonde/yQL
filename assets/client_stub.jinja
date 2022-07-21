@@ -13,7 +13,7 @@ from yql.common import *
 
 class {{service_name}}_Stub:
   def __init__(self, url: str, session: requests.Session = None):
-    self.url = url
+    self.url = url.rstrip("/")
     self.session = session or requests.Session()
     self.status = partial(call_rpc, sess = self.session, url = f"{url}/")
     self.protos = partial(call_rpc, sess = self.session, url = f"{url}/protos")
