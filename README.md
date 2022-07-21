@@ -9,10 +9,10 @@ Light weight (5.68Kb) embed-able library. Used in production at [NimbleBox](http
 Install `protoc` on your machine:
 
 ```
-protoc --python_out=./ --mypy_out=./ --plugin=protoc-gen-custom=./yql/main.py --custom_out=./examples/gen ./examples/protos/helloworld.proto
+protoc --python_out=./ --mypy_out=./ --plugin=protoc-gen-custom=./yql/main.py ./examples/helloworld/helloworld.proto
 ```
 
-This will create the following files:
+This will create the following files, by default writes in the same folder that the proto is present in:
 
 ```
 ./

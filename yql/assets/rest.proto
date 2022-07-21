@@ -20,5 +20,8 @@ message Echo {
   // proto_data is the jsonified message
   // on server side loads(proto_data) -> dict_to_message
   // on client side proto_data = message_to_json(client_message)
-  string proto_data = 6;
+  // string proto_data = 6;
+
+  // protobuf serilaised to the a base64 string
+  string base64_string = 6; 
 }

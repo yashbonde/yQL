@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
 from helloworld_server import Greeter_Servicer
-from helloworld_pb2 import HelloRequest, HelloReply
+from helloworld_pb2 import HelloReply, HelloRequest
 
 proto_services = { 
   "SayHello": Greeter_Servicer.SayHello,
@@ -15,7 +15,7 @@ proto_messages = {
 
 
 from yql.rest_pb2 import Echo
-from yql.common import default_echo, message_to_dict, run_rpc, dict_to_message, message_to_json
+from yql.common import *
 
 # ------
 
@@ -72,7 +72,8 @@ async def predict(request: Request, response: Response):
     response.status_code = 400
     return message_to_dict(echo)
   try:
-    proto = dict_to_message(loads(echo_req.proto_data), proto_cls())
+    # proto = dict_to_message(loads(echo_req.proto_data), proto_cls())
+    proto = b64_to_message(echo_req.base64_string, proto_cls())
   except Exception as e:
     echo.message = "Invalid proto_data: " + str(e)
     response.status_code = 400
@@ -93,6 +94,7 @@ async def predict(request: Request, response: Response):
     return message_to_dict(echo)
 
   echo.message = "OK"
-  echo.proto_data = message_to_json(out)
+  # echo.proto_data = message_to_json(out)
+  echo.base64_string = message_to_b64(out)
   response.status_code = 200
   return message_to_dict(echo)

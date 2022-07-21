@@ -18,6 +18,10 @@ file_x = lambda *x: os.path.join(os.path.dirname(__file__), *x)
 from contextlib import contextmanager
 from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGeneratorResponse
 
+class Env:
+  YQL_FOLDER: str = lambda x: os.getenv("YQL_FOLDER", x)
+  YQL_PBREL: str = lambda x: os.getenv("YQL_PBREL", x)
+
 @contextmanager
 def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorResponse]]:
     if len(sys.argv) > 1 and sys.argv[1] in ("-V", "--version"):
@@ -31,7 +35,7 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
 
     request.ParseFromString(sys.stdin.buffer.read())
     # with open(file_x("sample.txt"), "w") as f:
-    #   f.write(repr(request.proto_file))
+    #   f.write(repr(request.proto_file[0].name))
 
     yield request, response
 
@@ -55,7 +59,11 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
       
       # create all the data needed to write the file
       # TODO: @yashbonde: figure out how to get the comments as well for the parts
-      trg_folder, proto_name = os.path.split(proto_file.name)
+      trg_folder = Env.YQL_FOLDER("")
+      pb_relative = Env.YQL_PBREL("")
+      proto_folder, proto_name = os.path.split(proto_file.name)
+      trg_folder = trg_folder or proto_folder
+
       run_server = os.path.join(trg_folder, "server.py")
       trg_server = os.path.join(trg_folder, proto_name.split(".")[0] + "_server.py")
       trg_client = os.path.join(trg_folder, proto_name.split(".")[0] + "_client.py")
@@ -67,20 +75,20 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         _in_var =  method.input_type.replace(".", "_")
         _in_proto = method.input_type.strip(".")
         _in_proto_message = _in_proto.split(".")[-1]
-        proto_imports.setdefault(proto_name.split(".")[0] + "_pb2", []).append(_in_proto_message)
+        proto_imports.setdefault(pb_relative + "." + proto_name.split(".")[0] + "_pb2", []).append(_in_proto_message)
 
         # process the output message information
         _out_var = method.output_type.replace(".", "_")
         _out_proto = method.output_type.strip(".")
         _out_proto_message = _out_proto.split(".")[-1]
-        proto_imports.setdefault(proto_name.split(".")[0] + "_pb2", []).append(_out_proto_message)
+        proto_imports.setdefault(pb_relative + "." + proto_name.split(".")[0] + "_pb2", []).append(_out_proto_message)
 
         # create the service tuple
         service_tuples.append((method.name, _in_var, _in_proto_message, _out_var, _out_proto_message))
         all_services.add(method.name)
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
-      imports_strings = [f"from {k} import {', '.join(v)}" for k,v in proto_imports.items()]
+      imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
       all_services = sorted(all_services)
       all_protos = sorted(all_protos)
 
@@ -111,8 +119,9 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
 
       # embed yql in target folder
       files_to_move = [file_x("__init__.py"), file_x("common.py"), file_x("rest_pb2.py"), file_x("rest_pb2.pyi")]
-      os.system(f"mkdir {trg_folder}/yql")
-      os.system(f"cp {' '.join(files_to_move)} {trg_folder}/yql")
+      if not os.path.exists(f"{trg_folder}/yql"):
+        os.system(f"mkdir {trg_folder}/yql")
+        os.system(f"cp {' '.join(files_to_move)} {trg_folder}/yql")
 
 
 def main():

@@ -132,3 +132,4 @@ __ignore/
 js.proto
 
 examples/*/yql/
+ignore/

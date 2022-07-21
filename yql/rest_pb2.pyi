@@ -19,6 +19,7 @@ class Echo(google.protobuf.message.Message):
     TRACEBACK_FIELD_NUMBER: builtins.int
     RPC_NAME_FIELD_NUMBER: builtins.int
     PROTO_DATA_FIELD_NUMBER: builtins.int
+    BASE64_STRING_FIELD_NUMBER: builtins.int
     @property
     def server_time(self) -> google.protobuf.timestamp_pb2.Timestamp: ...
     message: typing.Text
@@ -31,6 +32,9 @@ class Echo(google.protobuf.message.Message):
     on client side proto_data = message_to_json(client_message)
     """
 
+    base64_string: typing.Text
+    """protobuf serilaised to the a base64 string"""
+
     def __init__(self,
         *,
         server_time: typing.Optional[google.protobuf.timestamp_pb2.Timestamp] = ...,
@@ -39,8 +43,9 @@ class Echo(google.protobuf.message.Message):
         traceback: typing.Text = ...,
         rpc_name: typing.Text = ...,
         proto_data: typing.Text = ...,
+        base64_string: typing.Text = ...,
         ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["data",b"data","error",b"error","message",b"message","server_time",b"server_time","traceback",b"traceback"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["data",b"data","error",b"error","message",b"message","proto_data",b"proto_data","rpc_name",b"rpc_name","server_time",b"server_time","traceback",b"traceback"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["base64_string",b"base64_string","data",b"data","error",b"error","message",b"message","proto_data",b"proto_data","rpc_name",b"rpc_name","server_time",b"server_time","traceback",b"traceback"]) -> None: ...
     def WhichOneof(self, oneof_group: typing_extensions.Literal["data",b"data"]) -> typing.Optional[typing_extensions.Literal["message","error","traceback"]]: ...
 global___Echo = Echo
