@@ -61,6 +61,8 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
       # TODO: @yashbonde: figure out how to get the comments as well for the parts
       trg_folder = Env.YQL_FOLDER("")
       pb_relative = Env.YQL_PBREL("")
+      if pb_relative:
+        pb_relative += "."
       proto_folder, proto_name = os.path.split(proto_file.name)
       trg_folder = trg_folder or proto_folder
 
@@ -75,13 +77,13 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         _in_var =  method.input_type.replace(".", "_")
         _in_proto = method.input_type.strip(".")
         _in_proto_message = _in_proto.split(".")[-1]
-        proto_imports.setdefault(pb_relative + "." + proto_name.split(".")[0] + "_pb2", []).append(_in_proto_message)
+        proto_imports.setdefault(pb_relative + proto_name.split(".")[0] + "_pb2", []).append(_in_proto_message)
 
         # process the output message information
         _out_var = method.output_type.replace(".", "_")
         _out_proto = method.output_type.strip(".")
         _out_proto_message = _out_proto.split(".")[-1]
-        proto_imports.setdefault(pb_relative + "." + proto_name.split(".")[0] + "_pb2", []).append(_out_proto_message)
+        proto_imports.setdefault(pb_relative + proto_name.split(".")[0] + "_pb2", []).append(_out_proto_message)
 
         # create the service tuple
         service_tuples.append((method.name, _in_var, _in_proto_message, _out_var, _out_proto_message))

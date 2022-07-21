@@ -22,7 +22,7 @@ class {{service_name}}_Stub:
     echo_resp: Echo = call_rpc(
       self.session,
       f"{self.url}/predict",
-      Echo(message = "{{_input_proto}}", base64_string=message_to_b64(_helloworld_HelloRequest), rpc_name = "{{_rpc}}")
+      Echo(message = "{{_input_proto}}", base64_string=message_to_b64({{_in_var}}), rpc_name = "{{_rpc}}")
     )
 
     if echo_resp.base64_string == "":
