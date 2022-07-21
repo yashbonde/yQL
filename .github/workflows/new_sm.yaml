@@ -12,8 +12,8 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2 
 
-      - name: Commit docs
-        working-directory: yql
+      - name: Commit Submodule
+        working-directory: "yql/"
         run: |
           git config --global user.name "Yash Bonde"
           git config --global user.email "bonde.yash97@gmail.com"
