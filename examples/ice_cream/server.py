@@ -2,14 +2,17 @@ from json import loads
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from {{server_stub}} import {{service_name}}_Servicer{%for _import in imports_strings%}
-{{_import}}{%endfor%}
+from ice_cream_server import IceCreamShop_Servicer
+from ice_cream_pb2 import *
 
-proto_services = { {%for service in all_services%}
-  "{{service}}": {{service_name}}_Servicer.{{service}},{%endfor%}
+proto_services = { 
+  "GetIceCream": IceCreamShop_Servicer.GetIceCream,
+  "ThrowIceCream": IceCreamShop_Servicer.ThrowIceCream,
 }
-proto_messages = { {%for proto in all_protos%}
-  "{{proto}}": {{proto}},{%endfor%}
+proto_messages = { 
+  "IceCream": IceCream,
+  "IceCreamRequest": IceCreamRequest,
+  "TissuePaper": TissuePaper,
 }
 
 
@@ -18,6 +21,41 @@ from yql.common import *
 
 # ------
 
+app = FastAPI()
+
+@app.post("/", response_class=JSONResponse)
+async def ping(request: Request, response: Response):
+  """Echo Server"""
+  # request.json
+  req = await request.body()
+  req = req.decode()
+  echo: Echo = default_echo()
+  try:
+    if req:
+      echo_req: Echo = dict_to_message(loads(req), Echo())
+    else:
+      echo_req = None
+  except Exception as e:
+    echo.message = "Invalid request: " + str(e)
+    response.status_code = 400
+  else:
+    if echo_req != None:
+      echo.message = echo_req.message
+    response.status_code = 200
+  return message_to_dict(echo)
+
+@app.post("/protos", response_class=JSONResponse)
+async def protos(request: Request, response: Response):
+  """Ignores Request"""
+  echo_protos: Echo = default_echo()
+  echo_protos.MergeFrom(Echo(
+    message="available protos",
+    proto_data=", ".join(tuple(proto_messages.keys()))
+  ))
+  response.status_code = 200
+  return message_to_dict(echo_protos)
+
+# @app.post("/predict", response_class=JSONResponse)
 async def predict(request: Request, response: Response):
   req = await request.body()
   req = req.decode()
@@ -64,42 +102,7 @@ async def predict(request: Request, response: Response):
   return message_to_dict(echo)
 
 
-# Define the Server
-app = FastAPI()
+# Now add all the endpoints defined by the 
 
-# Now add all the endpoints defined by the proto
-{%for service in all_services%}
-app.add_api_route("/{{ service }}", predict, methods=["POST"], response_class=JSONResponse){%endfor%}
-
-# Now add default endpoints
-@app.post("/", response_class=JSONResponse)
-async def ping(request: Request, response: Response):
-  """Echo Server"""
-  # request.json
-  req = await request.body()
-  req = req.decode()
-  echo: Echo = default_echo()
-  try:
-    if req:
-      echo_req: Echo = dict_to_message(loads(req), Echo())
-    else:
-      echo_req = None
-  except Exception as e:
-    echo.message = "Invalid request: " + str(e)
-    response.status_code = 400
-  else:
-    if echo_req != None:
-      echo.message = echo_req.message
-    response.status_code = 200
-  return message_to_dict(echo)
-
-@app.post("/protos", response_class=JSONResponse)
-async def protos(request: Request, response: Response):
-  """Ignores Request"""
-  echo_protos: Echo = default_echo()
-  echo_protos.MergeFrom(Echo(
-    message="available protos",
-    proto_data=", ".join(tuple(proto_messages.keys()))
-  ))
-  response.status_code = 200
-  return message_to_dict(echo_protos)
+app.add_api_route("/GetIceCream", predict, methods=["POST"], response_class=JSONResponse)
+app.add_api_route("/ThrowIceCream", predict, methods=["POST"], response_class=JSONResponse)

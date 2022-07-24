@@ -127,10 +127,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-__ignore/
-js.proto
-
-examples/*/yql/
-ignore/
-.DS_Store

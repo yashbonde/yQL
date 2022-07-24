@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+service IceCreamShop {
+  rpc GetIceCream(IceCreamRequest) returns (IceCream);
+  rpc ThrowIceCream(IceCream) returns (TissuePaper);
+}
+
+enum Flavor {
+  CHOCOLATE = 0;
+  VANILLA = 1;
+  STRAWBERRY = 2;
+}
+
+message IceCreamRequest {
+  Flavor flavor = 1; // 
+  string customer_name = 2; // name of the customer
+}
+
+message IceCream {
+  Flavor flavor = 1;
+  string customer_name = 2;
+  bool finished = 3;
+}
+
+message TissuePaper {
+  string message = 1;
+}

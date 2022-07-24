@@ -63,7 +63,7 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   fn = sess.post
   if message != None:
     message = message_to_dict(message)
-  print(f"POST {url} | json: {message}")
+  # print(f"POST {url} | json: {message}")
   r = fn(url, json = message)
 
   if r.status_code == 400:
@@ -80,7 +80,7 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   return out
 
 def run_rpc(service_fn, message):
-  # logging.info(f"service_fn: {service_fn.__qualname__}")
+  # print(f"service_fn: {service_fn.__qualname__}")
   try:
     response = service_fn(message)
   except NotImplementedError:

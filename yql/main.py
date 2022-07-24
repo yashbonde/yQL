@@ -90,7 +90,8 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         all_services.add(method.name)
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
-      imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
+      # imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
+      imports_strings = [f"from {k} import *" for k,v in proto_imports.items()]
       all_services = sorted(all_services)
       all_protos = sorted(all_protos)
 
