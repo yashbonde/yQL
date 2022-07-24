@@ -21,11 +21,11 @@ class {{service_name}}_Stub:
   def {{_rpc}}(self, {{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
     echo_resp: Echo = call_rpc(
       self.session,
-      f"{self.url}/predict",
+      f"{self.url}/{{_rpc}}",
       Echo(message = "{{_input_proto}}", base64_string=message_to_b64({{_in_var}}), rpc_name = "{{_rpc}}")
     )
 
-    if echo_resp.base64_string == "":
+    if echo_resp.base64_string == "" and echo_resp.message != "OK":
       # something else happened and we don't have a proto_data, so print the message
       print("\n> Server side error:")
       for l in echo_resp.message.splitlines():

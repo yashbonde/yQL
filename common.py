@@ -80,7 +80,7 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   return out
 
 def run_rpc(service_fn, message):
-  # logging.info(f"service_fn: {service_fn.__qualname__}")
+  # print(f"service_fn: {service_fn.__qualname__}")
   try:
     response = service_fn(message)
   except NotImplementedError:
