@@ -25,7 +25,7 @@ class IceCreamShop_Stub:
       Echo(message = "IceCreamRequest", base64_string=message_to_b64(_IceCreamRequest), rpc_name = "GetIceCream")
     )
 
-    if echo_resp.base64_string == "":
+    if echo_resp.base64_string == "" and echo_resp.message != "OK":
       # something else happened and we don't have a proto_data, so print the message
       print("\n> Server side error:")
       for l in echo_resp.message.splitlines():
@@ -44,7 +44,7 @@ class IceCreamShop_Stub:
       Echo(message = "IceCream", base64_string=message_to_b64(_IceCream), rpc_name = "ThrowIceCream")
     )
 
-    if echo_resp.base64_string == "":
+    if echo_resp.base64_string == "" and echo_resp.message != "OK":
       # something else happened and we don't have a proto_data, so print the message
       print("\n> Server side error:")
       for l in echo_resp.message.splitlines():

@@ -18,31 +18,28 @@ from yql.common import *
 
 # ------
 
-async def predict(request: Request, response: Response):
-  req = await request.body()
-  req = req.decode()
-  echo: Echo = default_echo()
-  try:
-    echo_req: Echo = dict_to_message(loads(req), Echo())
-  except Exception as e:
-    echo.message = "Invalid request: " + str(e)
-    response.status_code = 400
-    return message_to_dict(echo)
-
+def _fill_pb(echo_req: Echo, echo: Echo, response, decode = "b64", json_data = None) -> Echo:
   # get filled protobuf
   proto_cls = proto_messages.get(echo_req.message, None)
   if proto_cls is None:
     echo.message = f"Invalid proto type: '{echo_req.message}'"
     response.status_code = 400
     return message_to_dict(echo)
+  
+  echo.server_time.CopyFrom(get_timestamp())
+  echo.message = echo_req.message
   try:
-    # proto = dict_to_message(loads(echo_req.proto_data), proto_cls())
-    proto = b64_to_message(echo_req.base64_string, proto_cls())
+    if decode == "b64":
+      proto = b64_to_message(echo_req.base64_string, proto_cls())
+    elif decode == "json":
+      proto = dict_to_message(json_data, proto_cls())
   except Exception as e:
     echo.message = "Invalid proto_data: " + str(e)
     response.status_code = 400
     return message_to_dict(echo)
+  return proto
 
+def _call_rpc(echo_req: Echo, echo: Echo, response, proto):
   # get the rpc function to be called
   rpc_fn = proto_services.get(echo_req.rpc_name, None)
   if rpc_fn is None:
@@ -56,12 +53,63 @@ async def predict(request: Request, response: Response):
     echo.message = out
     response.status_code = 400
     return message_to_dict(echo)
+  return out
+
+
+async def predict(request: Request, response: Response):
+  echo: Echo = default_echo()
+  req = await request.body()
+  req = req.decode()
+  
+  try:
+    echo_req: Echo = dict_to_message(loads(req), Echo())
+  except Exception as e:
+    echo.message = "Invalid request: " + str(e)
+    response.status_code = 400
+    return message_to_dict(echo)
+
+  proto = _fill_pb(echo_req, echo, response, decode = "b64")
+  if isinstance(proto, dict):
+    return proto
+
+  out = _call_rpc(echo_req, echo, response, proto)
+  if isinstance(out, dict):
+    return out
 
   echo.message = "OK"
-  # echo.proto_data = message_to_json(out)
   echo.base64_string = message_to_b64(out)
   response.status_code = 200
   return message_to_dict(echo)
+
+
+async def predict_json(request: Request, response: Response):
+  echo: Echo = default_echo()
+  req = await request.body()
+  req = req.decode()
+
+  # req has structure similar to Echo:
+  # {
+  #   "rpc_name": "...",
+  #   "message": "...",
+  #   "data": "json-data of the protobuf, client responsibility"
+  # }
+
+  try:
+    json_data = loads(req)
+  except Exception as e:
+    echo.message = "Invalid request: " + str(e)
+    response.status_code = 400
+    return message_to_dict(echo)
+
+  echo_req = Echo(rpc_name=json_data["rpc_name"], message=json_data["message"])
+  proto = _fill_pb(echo_req, echo, response, decode = "json", json_data = json_data["data"])
+  if isinstance(proto, dict):
+    return proto
+
+  out = _call_rpc(echo_req, echo, response, proto)
+  if isinstance(out, dict):
+    return out
+  return message_to_dict(out)
 
 
 # Define the Server
@@ -69,7 +117,8 @@ app = FastAPI()
 
 # Now add all the endpoints defined by the proto
 {%for service in all_services%}
-app.add_api_route("/{{ service }}", predict, methods=["POST"], response_class=JSONResponse){%endfor%}
+app.add_api_route("/{{ service }}", predict, methods=["POST"], response_class=JSONResponse)
+app.add_api_route("/{{ service }}_json", predict_json, methods=["POST"], response_class=JSONResponse){%endfor%}
 
 # Now add default endpoints
 @app.post("/", response_class=JSONResponse)
