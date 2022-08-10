@@ -115,6 +115,17 @@ async def predict_json(request: Request, response: Response):
 # Define the Server
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Now add all the endpoints defined by the proto
 {%for service in all_services%}
 app.add_api_route("/{{ service }}", predict, methods=["POST"], response_class=JSONResponse)
