@@ -40,13 +40,19 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
     yield request, response
 
     # iterate over all the files in the data
+    no_service_def = []
+    multiple_service = []
     for proto_file in request.proto_file:
-
+      with open("./debug.txt", "w") as f:
+        f.write(str(proto_file))
       if len(proto_file.service) == 0:
-        response.error = "No service definition found"
-        sys.stdout.buffer.write(response.SerializeToString())
-        return
+        # response.error = "No service definition found"
+        # sys.stdout.buffer.write(response.SerializeToString())
+        # return
+        no_service_def.append(proto_file)
+        continue
       if len(proto_file.service) > 1:
+        multiple_service.append(proto_file)
         response.error = "Multiple service definitions found, should contain only one"
         sys.stdout.buffer.write(response.SerializeToString())
         return
@@ -90,6 +96,7 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         all_services.add(method.name)
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
+
       # imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
       imports_strings = [f"from {k} import *" for k,v in proto_imports.items()]
       all_services = sorted(all_services)
