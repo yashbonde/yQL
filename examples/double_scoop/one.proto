@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "examples/double_scoop/two.proto";
+
+service Scooper {
+  rpc Hello(OneMessage) returns (OneMessage);
+  rpc WhatTime(google.protobuf.Empty) returns (google.protobuf.Timestamp);
+  rpc DoubleHello(OneMessage) returns (DoubleMessage);
+}
+
+message OneMessage {
+  string name = 1;
+  google.protobuf.Timestamp now = 2;
+}
