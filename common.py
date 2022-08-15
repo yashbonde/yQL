@@ -3,6 +3,7 @@ import sys
 import base64
 import traceback
 from json import loads
+from inspect import signature
 
 import requests
 import random
@@ -79,10 +80,15 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   out = dict_to_message(r.json(), Echo())
   return out
 
-def run_rpc(service_fn, message):
+def run_rpc(service_fn, message, **kwargs):
   # print(f"service_fn: {service_fn.__qualname__}")
+  args = signature(service_fn).parameters
+  if len(args) == 1 and len(kwargs):
+    return "Service function takes no arguments"
+  if len(args) - 1 != len(kwargs):
+    return f"Service function takes {len(args) - 1} arguments, but {len(kwargs)} were provided"
   try:
-    response = service_fn(message)
+    response = service_fn(message, **kwargs)
   except NotImplementedError:
     return default_echo()
   except Exception as e:

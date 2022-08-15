@@ -39,7 +39,7 @@ def _fill_pb(echo_req: Echo, echo: Echo, response, decode = "b64", json_data = N
     return message_to_dict(echo)
   return proto
 
-def _call_rpc(echo_req: Echo, echo: Echo, response, proto):
+def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, proto):
   # get the rpc function to be called
   rpc_fn = proto_services.get(echo_req.rpc_name, None)
   if rpc_fn is None:
@@ -72,7 +72,7 @@ async def predict(request: Request, response: Response):
   if isinstance(proto, dict):
     return proto
 
-  out = _call_rpc(echo_req, echo, response, proto)
+  out = _call_rpc(request, echo_req, echo, response, proto)
   if isinstance(out, dict):
     return out
 
@@ -106,7 +106,7 @@ async def predict_json(request: Request, response: Response):
   if isinstance(proto, dict):
     return proto
 
-  out = _call_rpc(echo_req, echo, response, proto)
+  out = _call_rpc(request, echo_req, echo, response, proto)
   if isinstance(out, dict):
     return out
   return message_to_dict(out)
