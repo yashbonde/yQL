@@ -18,6 +18,11 @@ file_x = lambda *x: os.path.join(os.path.dirname(__file__), *x)
 from contextlib import contextmanager
 from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGeneratorResponse
 
+def debug(x):
+  with open("./debug.txt", "w") as f:
+    f.write(str(x))
+      
+
 class Env:
   YQL_FOLDER: str = lambda x: os.getenv("YQL_FOLDER", x)
   YQL_PBREL: str = lambda x: os.getenv("YQL_PBREL", x)
@@ -34,8 +39,6 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
     response.supported_features |= (CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL)
 
     request.ParseFromString(sys.stdin.buffer.read())
-    # with open(file_x("sample.txt"), "w") as f:
-    #   f.write(repr(request.proto_file[0].name))
 
     yield request, response
 
@@ -43,14 +46,11 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
     no_service_def = []
     multiple_service = []
     for proto_file in request.proto_file:
-      with open("./debug.txt", "w") as f:
-        f.write(str(proto_file))
+
       if len(proto_file.service) == 0:
-        # response.error = "No service definition found"
-        # sys.stdout.buffer.write(response.SerializeToString())
-        # return
         no_service_def.append(proto_file)
         continue
+      
       if len(proto_file.service) > 1:
         multiple_service.append(proto_file)
         response.error = "Multiple service definitions found, should contain only one"
@@ -97,8 +97,11 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
 
-      # imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
+      # now create all the items needed by our Jinja Renderer
+      dependency_strings = [f"from {'.'.join(x.split('/'))[:-6]}_pb2 import *" for x in proto_file.dependency]
       imports_strings = [f"from {k} import *" for k,v in proto_imports.items()]
+      all_imports = dependency_strings + imports_strings
+      debug(all_imports)
       all_services = sorted(all_services)
       all_protos = sorted(all_protos)
 
@@ -106,14 +109,14 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
       with open(file_x("assets", "server_stub.jinja"), "r") as src, open(trg_server, "w") as trg:
         trg.write(jinja2.Template(src.read()).render(
           service_tuples=service_tuples,
-          imports_strings=imports_strings,
+          all_imports=all_imports,
           service_name=service.name,
         ))
 
       with open(file_x("assets", "client_stub.jinja"), "r") as src, open(trg_client, "w") as trg:
         trg.write(jinja2.Template(src.read()).render(
           service_tuples=service_tuples,
-          imports_strings=imports_strings,
+          all_imports=all_imports,
           service_name = service.name,
           zip=zip
         ))
@@ -124,7 +127,7 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
           service_name = service.name,
           all_services=list(all_services),
           all_protos=list(all_protos),
-          imports_strings=imports_strings,
+          all_imports=all_imports,
         ))
 
       # embed yql in target folder
