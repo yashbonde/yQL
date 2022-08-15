@@ -9,6 +9,7 @@
 # Description of SourceCodeInfo: https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto
 
 import os
+import ast
 import sys
 import jinja2
 from typing import Iterator, Tuple
@@ -17,6 +18,48 @@ file_x = lambda *x: os.path.join(os.path.dirname(__file__), *x)
 
 from contextlib import contextmanager
 from google.protobuf.compiler.plugin_pb2 import CodeGeneratorRequest, CodeGeneratorResponse
+
+def debug(x):
+  with open("./debug.txt", "w") as f:
+    f.write(str(x))
+      
+
+class YQLNodeVisitor(ast.NodeVisitor):
+  def __init__(self, functions_present: set, code_lines) -> None:
+    self.imports = []
+    self.fn_code ={}
+    self.functions_present = functions_present
+    self.code_lines = code_lines
+
+  def _get_code_portion(self, lineno, col_offset, end_lineno, end_col_offset, **_):
+    """Returns code piece for any section given all the lines it contains"""
+    sl, so, el, eo = lineno, col_offset, end_lineno, end_col_offset
+    if sl == el:
+      return self.code_lines[sl-1][so:eo]
+    code = ""
+    for i in range(sl - 1, el, 1):
+      if i == sl - 1:
+        code += self.code_lines[i][so:]
+      elif i == el - 1:
+        code += "\n" + self.code_lines[i][:eo]
+      else:
+        code += "\n" + self.code_lines[i]
+    return code
+
+  def visit_FunctionDef(self, node: ast.FunctionDef):
+    if node.name in self.functions_present:
+      fn_code = self._get_code_portion(
+        lineno = node.body[0].__dict__["lineno"],
+        col_offset = node.body[0].__dict__["col_offset"],
+        end_lineno = node.body[-1].__dict__["end_lineno"],
+        end_col_offset = node.body[-1].__dict__["end_col_offset"],
+      )
+      if fn_code == "raise NotImplementedError":
+        # there is nothing in this function so we skip this
+        return
+      fn_code = " " * node.body[0].__dict__["col_offset"] + fn_code
+      self.fn_code[node.name] = fn_code
+
 
 class Env:
   YQL_FOLDER: str = lambda x: os.getenv("YQL_FOLDER", x)
@@ -34,19 +77,20 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
     response.supported_features |= (CodeGeneratorResponse.FEATURE_PROTO3_OPTIONAL)
 
     request.ParseFromString(sys.stdin.buffer.read())
-    # with open(file_x("sample.txt"), "w") as f:
-    #   f.write(repr(request.proto_file[0].name))
 
     yield request, response
 
     # iterate over all the files in the data
+    no_service_def = []
+    multiple_service = []
     for proto_file in request.proto_file:
 
       if len(proto_file.service) == 0:
-        response.error = "No service definition found"
-        sys.stdout.buffer.write(response.SerializeToString())
-        return
+        no_service_def.append(proto_file)
+        continue
+      
       if len(proto_file.service) > 1:
+        multiple_service.append(proto_file)
         response.error = "Multiple service definitions found, should contain only one"
         sys.stdout.buffer.write(response.SerializeToString())
         return
@@ -90,23 +134,40 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
         all_services.add(method.name)
         all_protos.add(_in_proto_message)
         all_protos.add(_out_proto_message)
-      # imports_strings = [f"from {k} import {', '.join(set(v))}" for k,v in proto_imports.items()]
+
+      # now create all the items needed by our Jinja Renderer
+      dependency_strings = [f"from {'.'.join(x.split('/'))[:-6]}_pb2 import *" for x in proto_file.dependency]
       imports_strings = [f"from {k} import *" for k,v in proto_imports.items()]
+      all_imports = dependency_strings + imports_strings
       all_services = sorted(all_services)
       all_protos = sorted(all_protos)
+
+      if os.path.exists(trg_server):
+        # the server file already exists, we should update that instead of overwriting it, since most of time
+        # the update is going to be a small update like addition of a new service
+        os.system(f"mv {trg_server} {trg_server}.back")
+        with open(f"{trg_server}.back", "r") as f:
+          code = f.read()
+          node = ast.parse(code)
+          code_lines = code.splitlines()
+
+        nv = YQLNodeVisitor(functions_present=set([x[0] for x in service_tuples]), code_lines=code_lines)
+        nv.visit(node)
+
+        # for now we are not doing anything, waiting on some more ideas for this
 
       # load the jinja templates
       with open(file_x("assets", "server_stub.jinja"), "r") as src, open(trg_server, "w") as trg:
         trg.write(jinja2.Template(src.read()).render(
           service_tuples=service_tuples,
-          imports_strings=imports_strings,
+          all_imports=all_imports,
           service_name=service.name,
         ))
 
       with open(file_x("assets", "client_stub.jinja"), "r") as src, open(trg_client, "w") as trg:
         trg.write(jinja2.Template(src.read()).render(
           service_tuples=service_tuples,
-          imports_strings=imports_strings,
+          all_imports=all_imports,
           service_name = service.name,
           zip=zip
         ))
@@ -117,7 +178,7 @@ def code_generation() -> Iterator[Tuple[CodeGeneratorRequest, CodeGeneratorRespo
           service_name = service.name,
           all_services=list(all_services),
           all_protos=list(all_protos),
-          imports_strings=imports_strings,
+          all_imports=all_imports,
         ))
 
       # embed yql in target folder

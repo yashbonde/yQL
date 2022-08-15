@@ -2,7 +2,7 @@ from json import loads
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from {{server_stub}} import {{service_name}}_Servicer{%for _import in imports_strings%}
+from {{server_stub}} import {{service_name}}_Servicer{%for _import in all_imports%}
 {{_import}}{%endfor%}
 
 proto_services = { {%for service in all_services%}
