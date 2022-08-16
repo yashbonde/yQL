@@ -1,8 +1,10 @@
 import io
 import sys
 import base64
+import logging
 import traceback
 from json import loads
+from inspect import signature
 
 import requests
 import random
@@ -13,6 +15,8 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.message import Message
 
 from .rest_pb2 import Echo
+
+logger = logging.getLogger(__name__)
 
 message_to_dict = partial(
   MessageToDict,
@@ -63,32 +67,50 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   fn = sess.post
   if message != None:
     message = message_to_dict(message)
-  # print(f"POST {url} | json: {message}")
+  # logger.info(f"POST {url} | json: {message}")
   r = fn(url, json = message)
 
   if r.status_code == 400:
     data = loads(r.text)
     out = dict_to_message(data, Echo())
-    return out
-
-  try:
-    r.raise_for_status()
-  except Exception as e:
-    # logging.error(r.content)
-    raise e
+    if out.base64_string == "":
+      logger.error(f"400: {out.message}")
+      return None
+  elif r.status_code == 501:
+    logger.error("501: NOT IMPLEMENTED")
+    return None
+  elif r.status_code == 500:
+    logger.error("500: INTERNAL SERVER ERROR")
+    return None
   out = dict_to_message(r.json(), Echo())
   return out
 
-def run_rpc(service_fn, message):
-  # print(f"service_fn: {service_fn.__qualname__}")
+def run_rpc(service_fn, message, **kwargs) -> Message:
+  _echo = default_echo()
+
+  # check if correct arguments are being sent or not
+  args = signature(service_fn).parameters
+  if len(args) - 1 < len(kwargs):
+    logger.error(f"Service function takes {len(args) - 1} arguments, but {len(kwargs)} were provided")
+    _echo.message = "500: INTERNAL SERVER ERROR"
+    return _echo
+
+  # run it and handle any exceptions
   try:
-    response = service_fn(message)
+    response = service_fn(message, **kwargs)
   except NotImplementedError:
-    return default_echo()
+    return Echo(server_time=get_timestamp(), message = "501: NOT IMPLEMENTED")
   except Exception as e:
     f = io.StringIO("")
     traceback.print_exception(*sys.exc_info(), file = f)
-    return f.getvalue()
+    for l in f.readlines():
+      logger.error(l)
+    return Echo(server_time=get_timestamp(), message = "500: INTERNAL SERVER ERROR")
+  
+  # manage response
+  if isinstance(response, str):
+    _echo.message = f"400: {response}" 
+    response = _echo
   return response
 
 def get_timestamp() -> Timestamp:
