@@ -9,8 +9,6 @@ from functools import partial
 from yql.rest_pb2 import Echo
 from yql.common import *
 
-supress_server_prints = os.getenv("YQL_QUITE", False)
-
 # ------ Stub ------ #
 
 class {{service_name}}_Stub:
@@ -29,11 +27,10 @@ class {{service_name}}_Stub:
 
     if echo_resp.base64_string == "" and echo_resp.message != "OK":
       # something else happened and we don't have a proto_data, so print the message
-      if not supress_server_prints:
-        print("\n> Server side error:")
-        for l in echo_resp.message.splitlines():
-          print(l)
-        print("\n")
+      print("\n> Server side error:")
+      for l in echo_resp.message.splitlines():
+        print(l)
+      print("\n")
       return None
     
     {{_out_var}} = {{_output_proto}}() # predefine the output proto

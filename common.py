@@ -67,19 +67,21 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
   fn = sess.post
   if message != None:
     message = message_to_dict(message)
-  # print(f"POST {url} | json: {message}")
+  # logger.info(f"POST {url} | json: {message}")
   r = fn(url, json = message)
 
   if r.status_code == 400:
     data = loads(r.text)
     out = dict_to_message(data, Echo())
-    return out
-
-  try:
-    r.raise_for_status()
-  except Exception as e:
-    # logging.error(r.content)
-    raise e
+    if out.base64_string == "":
+      logger.error(f"400: {out.message}")
+    return None
+  elif r.status_code == 501:
+    logger.error("501: NOT IMPLEMENTED")
+    return None
+  elif r.status_code == 500:
+    logger.error("500: INTERNAL SERVER ERROR")
+    return None
   out = dict_to_message(r.json(), Echo())
   return out
 
