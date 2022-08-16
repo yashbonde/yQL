@@ -49,11 +49,13 @@ def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, 
 
   # get output and return the information
   out = run_rpc(rpc_fn, proto)
-  if isinstance(out, str):
-    echo.message = out
-    response.status_code = 400
-    return message_to_dict(echo)
-  return out
+  if isinstance(out, Echo):
+    response.status_code = int(out.message[:3])
+    echo.message = out.message[4:]
+  else:
+    echo.message = "OK"
+    echo.base64_string = message_to_b64(out)
+  return message_to_dict(echo)
 
 
 async def predict(request: Request, response: Response):
@@ -73,14 +75,7 @@ async def predict(request: Request, response: Response):
     return proto
 
   out = _call_rpc(request, echo_req, echo, response, proto)
-  if isinstance(out, dict):
-    return out
-
-  echo.message = "OK"
-  echo.base64_string = message_to_b64(out)
-  response.status_code = 200
-  return message_to_dict(echo)
-
+  return out
 
 async def predict_json(request: Request, response: Response):
   echo: Echo = default_echo()
@@ -107,9 +102,7 @@ async def predict_json(request: Request, response: Response):
     return proto
 
   out = _call_rpc(request, echo_req, echo, response, proto)
-  if isinstance(out, dict):
-    return out
-  return message_to_dict(out)
+  return out
 
 
 # Define the Server
