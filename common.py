@@ -75,13 +75,13 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
     out = dict_to_message(data, Echo())
     if out.base64_string == "":
       logger.error(f"400: {out.message}")
-    raise Exception(f"400: {out.message}")
+      return None
   elif r.status_code == 501:
     logger.error("501: NOT IMPLEMENTED")
-    raise Exception("501: NOT IMPLEMENTED")
+    return None
   elif r.status_code == 500:
     logger.error("500: INTERNAL SERVER ERROR")
-    raise Exception("500: INTERNAL SERVER ERROR")
+    return None
   out = dict_to_message(r.json(), Echo())
   return out
 
