@@ -125,6 +125,13 @@ app.add_api_route("/{{ service }}", predict, methods=["POST"], response_class=JS
 app.add_api_route("/{{ service }}_json", predict_json, methods=["POST"], response_class=JSONResponse){%endfor%}
 
 # Now add default endpoints
+@app.get("/", response_class=JSONResponse)
+async def health(request: Request, response: Response):
+  echo: Echo = default_echo()
+  echo.message = "I'm fine bro!"
+  response.status_code = 200
+  return message_to_dict(echo)
+
 @app.post("/", response_class=JSONResponse)
 async def ping(request: Request, response: Response):
   """Echo Server"""
