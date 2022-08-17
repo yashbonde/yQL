@@ -114,7 +114,7 @@ def run_rpc(service_fn, message, **kwargs) -> Message:
     return Echo(server_time=get_timestamp(), message = "501: NOT IMPLEMENTED")
   except Exception as e:
     f = traceback.format_exc()
-    for l in f.readlines():
+    for l in f.splitlines():
       if _logger:
         _logger.error(l)
       else:
