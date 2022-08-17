@@ -16,7 +16,7 @@ from google.protobuf.message import Message
 
 from .rest_pb2 import Echo
 
-logger = logging.getLogger(__name__)
+_logger = None
 
 message_to_dict = partial(
   MessageToDict,
@@ -74,13 +74,22 @@ def call_rpc(sess: requests.Session, url: str, message: Echo = None):
     data = loads(r.text)
     out = dict_to_message(data, Echo())
     if out.base64_string == "":
-      logger.error(f"400: {out.message}")
+      if _logger:
+        _logger.error(f"400: {out.message}")
+      else:
+        print(f"400: {out.message}")
       return None
   elif r.status_code == 501:
-    logger.error("501: NOT IMPLEMENTED")
+    if _logger:
+      _logger.error("501: NOT IMPLEMENTED")
+    else:
+      print("501: NOT IMPLEMENTED")
     return None
   elif r.status_code == 500:
-    logger.error("500: INTERNAL SERVER ERROR")
+    if _logger:
+      _logger.error("500: INTERNAL SERVER ERROR")
+    else:
+      print("500: INTERNAL SERVER ERROR")
     return None
   out = dict_to_message(r.json(), Echo())
   return out
@@ -91,7 +100,10 @@ def run_rpc(service_fn, message, **kwargs) -> Message:
   # check if correct arguments are being sent or not
   args = signature(service_fn).parameters
   if len(args) - 1 < len(kwargs):
-    logger.error(f"Service function takes {len(args) - 1} arguments, but {len(kwargs)} were provided")
+    if _logger:
+      _logger.error(f"Service function takes upto {len(args) - 1} arguments, but {len(kwargs)} were provided")
+    else:
+      print(f"Service function takes upto {len(args) - 1} arguments, but {len(kwargs)} were provided")
     _echo.message = "500: INTERNAL SERVER ERROR"
     return _echo
 
@@ -101,10 +113,12 @@ def run_rpc(service_fn, message, **kwargs) -> Message:
   except NotImplementedError:
     return Echo(server_time=get_timestamp(), message = "501: NOT IMPLEMENTED")
   except Exception as e:
-    f = io.StringIO("")
-    traceback.print_exception(*sys.exc_info(), file = f)
+    f = traceback.format_exc()
     for l in f.readlines():
-      logger.error(l)
+      if _logger:
+        _logger.error(l)
+      else:
+        print(l)
     return Echo(server_time=get_timestamp(), message = "500: INTERNAL SERVER ERROR")
   
   # manage response
@@ -123,3 +137,7 @@ def default_echo() -> Echo:
     server_time=get_timestamp(),
     message = "".join(random.choices("abcedfghijklmnopqrtsuvwxyz0123456789", k = 32))
   )
+
+def set_logger(logger):
+  global _logger
+  _logger = logger
