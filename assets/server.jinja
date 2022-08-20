@@ -39,7 +39,7 @@ def _fill_pb(echo_req: Echo, echo: Echo, response, decode = "b64", json_data = N
     return message_to_dict(echo)
   return proto
 
-def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, proto):
+def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, proto, return_as_json: bool = False):
   # get the rpc function to be called
   rpc_fn = proto_services.get(echo_req.rpc_name, None)
   if rpc_fn is None:
@@ -48,15 +48,16 @@ def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, 
     return message_to_dict(echo)
 
   # get output and return the information
-  out = run_rpc(rpc_fn, proto)
+  out = run_rpc(rpc_fn, proto, jwt_token = request.headers['authorization'])
   if isinstance(out, Echo):
     response.status_code = int(out.message[:3])
     echo.message = out.message[4:]
   else:
+    if return_as_json:
+      return message_to_dict(out)
     echo.message = "OK"
     echo.base64_string = message_to_b64(out)
   return message_to_dict(echo)
-
 
 async def predict(request: Request, response: Response):
   echo: Echo = default_echo()
@@ -101,7 +102,7 @@ async def predict_json(request: Request, response: Response):
   if isinstance(proto, dict):
     return proto
 
-  out = _call_rpc(request, echo_req, echo, response, proto)
+  out = _call_rpc(request, echo_req, echo, response, proto, return_as_json = True)
   return out
 
 

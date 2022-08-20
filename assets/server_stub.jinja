@@ -4,5 +4,7 @@
 
 class {{service_name}}_Servicer(object):{%for (_service, _in_var, _input_proto, _out_var, _output_proto) in service_tuples%}
   def {{_service}}({{_in_var}}: {{_input_proto}}) -> {{_output_proto}}:
+    if not type({{_in_var}}) == {{_input_proto}}:
+      return "Incorrect proto message for {{_service}}"
     raise NotImplementedError
 {%endfor%}
