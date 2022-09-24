@@ -47,6 +47,12 @@ def _call_rpc(request: Request, echo_req: Echo, echo: Echo, response: Response, 
     response.status_code = 400
     return message_to_dict(echo)
 
+  # ensure that correct proto_class is passed
+  if not type(proto) == proto_messages.get(echo_req.message):
+    echo.message = f"Invalid proto type: '{echo_req.message}'"
+    response.status_code = 400
+    return message_to_dict(echo)
+
   # get output and return the information
   out = run_rpc(rpc_fn, proto, jwt_token = request.headers['authorization'])
   if isinstance(out, Echo):
