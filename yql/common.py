@@ -20,7 +20,6 @@ _logger = None
 
 message_to_dict = partial(
   MessageToDict,
-  including_default_value_fields = True,
   preserving_proto_field_name = True,
   use_integers_for_enums = True,
   float_precision = 4
@@ -33,7 +32,6 @@ dict_to_message = partial(
 
 message_to_json = partial(
   MessageToJson,
-  including_default_value_fields = True,
   preserving_proto_field_name = True,
   use_integers_for_enums = True,
   float_precision = 4
